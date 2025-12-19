@@ -1,55 +1,58 @@
-import { useGetMoviesQuery } from '@store/api/moviesApiSlice';
-
-const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
-
-const getPosterUrl = (path?: string | null) =>
-    path ? `${IMAGE_BASE_URL}/w500${path}` : null;
+import { Box, Grid, Typography } from '@mui/material';
+import ContentCard from '../components/ContentCard';
+import { useState } from 'react';
+import { useDebouncedValue } from '../../../../hooks';
+import { useGetMoviesQuery, useSearchMoviesQuery } from '../../../store/api/moviesApiSlice.ts';
+import TopBar from '../components/Topbar.tsx';
+import type { TmdbMovie } from '../../../store/interfaces/Movie.ts';
 
 const DiscoverPage = () => {
-    const { data, isLoading, isError } = useGetMoviesQuery({
-        page: 1
-        // genreIds: '28', // optional (Action)
-    });
+    const [search] = useState('');
+    const debouncedSearch = useDebouncedValue(search);
 
-    if (isLoading) {
-        return <div>Loading movies…</div>;
-    }
+    const isSearching = debouncedSearch.trim().length > 0;
 
-    if (isError || !data) {
-        return <div>Failed to load movies.</div>;
-    }
+    const {
+        data: discoverData,
+        isLoading: discoverLoading
+    } = useGetMoviesQuery({ page: 1 }, { skip: isSearching });
+
+    const {
+        data: searchData,
+        isLoading: searchLoading
+    } = useSearchMoviesQuery(
+        { query: debouncedSearch, page: 1 },
+        { skip: !isSearching }
+    );
+
+    const movies = isSearching ? searchData : discoverData?.results;
+    const loading = isSearching ? searchLoading : discoverLoading;
 
     return (
-        <div className="discover-page">
-            <h1>Discover Movies</h1>
+        <>
+            <TopBar />
 
-            <div className="movie-grid">
-                {data.results.map((movie) => {
-                    const posterUrl = getPosterUrl(movie.poster_path);
+            <Box sx={{ px: { xs: 2, md: 4 }, py: 3 }}>
+                <Typography variant="h5" fontWeight={800} sx={{ mb: 2 }}>
+                    {isSearching ? 'Search Results' : 'Discover Movies'}
+                </Typography>
 
-                    return (
-                        <div key={movie.id} className="movie-card">
-                            {posterUrl && (
-                                <img
-                                    src={posterUrl}
-                                    alt={movie.title}
-                                    loading="lazy"
-                                />
-                            )}
+                <Grid container spacing={2}>
+                    {loading &&
+                        Array.from({ length: 12 }).map((_, i) => (
+                            <ContentCard key={i} loading />
+                        ))}
 
-                            <div className="movie-info">
-                                <h3>{movie.title}</h3>
-                                {movie.release_date && (
-                                    <span className="year">
-                    {new Date(movie.release_date).getFullYear()}
-                  </span>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
+                    {!loading &&
+                        movies?.map((movie: TmdbMovie) => (
+                            <ContentCard
+                                key={movie.id}
+                                item={movie}
+                            />
+                        ))}
+                </Grid>
+            </Box>
+        </>
     );
 };
 

@@ -1,17 +1,17 @@
-export interface TmdbDiscoverResponse<T> {
+export interface TmdbDiscoverResponse {
     page: number;
-    results: T[];
+    results: TmdbMovie[];
     totalPages?: number;
     totalResults?: number;
 }
 
 export interface SearchResultDto {
     id: number;
-    type: 'movie' | 'person';
+    type: 'movie' | 'tv' | 'person';
     title: string;
     subtitle?: string;
     imagePath?: string | null;
-    popularity: number;
+    popularity?: number;
 }
 
 export interface TmdbMovie {

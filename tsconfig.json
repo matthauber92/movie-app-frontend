@@ -38,12 +38,12 @@
       "@services/*": [
         "./src/services/*"
       ],
-//      "@context/*": [
-//        "./src/context/*"
-//      ],
-//      "@utils/*": [
-//        "./src/common/utils/*"
-//      ],
+      //      "@context/*": [
+      //        "./src/context/*"
+      //      ],
+      "@utils/*": [
+        "./src/common/utils/*"
+      ],
       "@__generated__/*": [
         "./src/__generated/*"
       ]

@@ -13,7 +13,7 @@ export default defineConfig({
             '@common': path.resolve(__dirname, './src/common/'),
             '@features': path.resolve(__dirname, './src/features/'),
             '@services': path.resolve(__dirname, './src/services/'),
-            // '@utils': path.resolve(__dirname, './src/common/utils/'),
+            '@utils': path.resolve(__dirname, './src/common/utils/'),
             '@components': path.resolve(__dirname, './src/common/components/'),
             '@interfaces': path.resolve(__dirname, './src/common/interfaces/'),
             // '@context': path.resolve(__dirname, './src/context/'),
