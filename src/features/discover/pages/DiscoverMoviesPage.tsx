@@ -14,8 +14,7 @@ import ContentCard from '../components/ContentCard';
 import TopBar from '../../../common/components/Topbar';
 import { useGetMoviesQuery, useSearchMoviesQuery } from '../../../store/api/moviesApiSlice';
 import type { TmdbMovie } from '../../../store/interfaces/Movie';
-import { useInfiniteScroll } from '../../../../hooks/useInfiniteScroll';
-import { useDebouncedValue } from '../../../../hooks';
+import { useInfiniteScroll, useDebouncedValue } from '../../../../hooks';
 import { GENRES } from '../../../common';
 
 const DiscoverMoviesPage = () => {

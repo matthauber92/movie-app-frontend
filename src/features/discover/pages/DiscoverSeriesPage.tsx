@@ -4,7 +4,7 @@ import {
     Chip,
     Stack,
     Autocomplete,
-    TextField
+    TextField, Typography
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -90,7 +90,7 @@ const DiscoverSeriesPage = () => {
                         getOptionKey={(option) => `${option.type}-${option.id}`}
                         onChange={(_, value) => {
                             if (!value) return;
-                            navigate(`/tv/${value.id}`);
+                            navigate(`/series/${value.id}`);
                             setSearchInput('');
                         }}
                         renderInput={(params) => (
@@ -108,6 +108,44 @@ const DiscoverSeriesPage = () => {
                                     )
                                 }}
                             />
+                        )}
+                        renderOption={(props, option) => (
+                            <Box
+                                component="li"
+                                {...props}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1
+                                }}
+                            >
+                                {option.imagePath && (
+                                    <img
+                                        src={`https://image.tmdb.org/t/p/w92${option.imagePath}`}
+                                        alt={option.title}
+                                        width={40}
+                                        height={60}
+                                        style={{
+                                            objectFit: 'cover',
+                                            borderRadius: 6
+                                        }}
+                                    />
+                                )}
+
+                                <Box>
+                                    <Typography fontWeight={600}>
+                                        {option.title}
+                                    </Typography>
+                                    {option.subtitle && (
+                                        <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                        >
+                                            {option.subtitle}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Box>
                         )}
                     />
                 </Box>
