@@ -40,7 +40,6 @@ export const moviesApiSlice = createApi({
                 { type: 'Movie', id }
             ]
         })
-
     })
 });
 

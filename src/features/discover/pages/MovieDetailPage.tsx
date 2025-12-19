@@ -44,89 +44,117 @@ const MovieDetailPage = () => {
         );
     }
 
-    /* ---------------- URLS ---------------- */
     const posterUrl = movie.posterPath
         ? `https://image.tmdb.org/t/p/w500${movie.posterPath}`
-        : undefined;
+        : null;
 
     const backdropUrl = movie.backdropPath
         ? `https://image.tmdb.org/t/p/w780${movie.backdropPath}`
-        : undefined;
+        : null;
 
     const videoUrl = `https://vidlink.pro/movie/${movie.id}?player=jw&nextbutton=true`;
 
     return (
-        <Box>
-            {backdropUrl && (
-                <Box
-                    sx={{
-                        position: 'relative',
-                        height: { xs: 300, md: 460 },
-                        backgroundImage: `linear-gradient(
+        <Box sx={{ mt: 5 }}>
+            {/* 🎬 HERO BACKDROP (image or placeholder) */}
+            <Box
+                sx={{
+                    position: 'relative',
+                    height: { xs: 300, md: 460 },
+                    backgroundImage: backdropUrl
+                        ? `linear-gradient(
                             to bottom,
                             rgba(0,0,0,0.35),
                             ${theme.palette.background.default}
-                        ), url(${backdropUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        mb: { xs: 6, md: 8 }
-                    }}
-                >
-                    <Tooltip title="Back" arrow>
-                        <IconButton
-                            onClick={() => navigate(-1)}
-                            sx={{
-                                position: 'absolute',
-                                top: { xs: 16, md: 24 },
-                                left: { xs: 16, md: 32 },
-                                zIndex: 2,
-                                color: 'white',
-                                backgroundColor: 'rgba(20,20,30,0.55)',
-                                backdropFilter: 'blur(10px)',
-                                border: '1px solid rgba(255,255,255,0.12)',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
-                                transition:
-                                    'all 200ms cubic-bezier(.4,0,.2,1)',
-                                '&:hover': {
-                                    backgroundColor:
-                                        'rgba(20,20,30,0.75)',
-                                    transform: 'translateY(-1px)'
-                                }
-                            }}
-                        >
-                            <ArrowBackRoundedIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )}
+                        ), url(${backdropUrl})`
+                        : `linear-gradient(
+                            to bottom,
+                            ${theme.palette.grey[800]},
+                            ${theme.palette.background.default}
+                        )`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    mb: { xs: 6, md: 8 }
+                }}
+            >
+                {/* 🔙 BACK BUTTON */}
+                <Tooltip title="Back" arrow>
+                    <IconButton
+                        onClick={() => {
+                            navigate('/movies');
+                        }}
+                        sx={{
+                            position: 'absolute',
+                            top: { xs: 16, md: 24 },
+                            left: { xs: 16, md: 32 },
+                            zIndex: 2,
+                            color: 'white',
+                            backgroundColor: 'rgba(20,20,30,0.55)',
+                            backdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+                            transition:
+                                'all 200ms cubic-bezier(.4,0,.2,1)',
+                            '&:hover': {
+                                backgroundColor:
+                                    'rgba(20,20,30,0.75)',
+                                transform: 'translateY(-1px)'
+                            }
+                        }}
+                    >
+                        <ArrowBackRoundedIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+
             <Box sx={{ px: { xs: 2, md: 6 }, mt: { xs: -4, md: -6 } }}>
                 <Stack
                     direction={{ xs: 'column', md: 'row' }}
                     spacing={5}
                 >
-                    {/* POSTER (lifted only) */}
-                    {posterUrl && (
-                        <Box
-                            component="img"
-                            src={posterUrl}
-                            alt={movie.title}
-                            sx={{
-                                width: 240,
-                                borderRadius: 3,
-                                boxShadow:
-                                    '0 30px 80px rgba(0,0,0,0.65)',
-                                alignSelf: 'flex-start',
-                                mt: { xs: -4, md: -6 } // ✅ FIX
-                            }}
-                        />
-                    )}
+                    {/* POSTER OR PLACEHOLDER */}
+                    <Box
+                        sx={{
+                            width: 240,
+                            height: 360,
+                            borderRadius: 3,
+                            overflow: 'hidden',
+                            alignSelf: 'flex-start',
+                            mt: { xs: -4, md: -6 },
+                            backgroundColor: posterUrl
+                                ? 'transparent'
+                                : 'background.paper',
+                            border: posterUrl
+                                ? 'none'
+                                : '1px solid',
+                            borderColor: 'divider',
+                            boxShadow:
+                                '0 30px 80px rgba(0,0,0,0.65)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        {posterUrl && (
+                            <Box
+                                component="img"
+                                src={posterUrl}
+                                alt={movie.title}
+                                sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover'
+                                }}
+                            />
+                        )}
+                    </Box>
 
                     {/* TEXT BLOCK */}
                     <Box sx={{ maxWidth: 720 }}>
                         <Typography
                             variant="h3"
                             fontWeight={800}
-                            sx={{ mb: 1, mt: 0.5 }} // safety margin
+                            sx={{ mb: 1, mt: 0.5 }}
                         >
                             {movie.title}
                         </Typography>
@@ -147,9 +175,7 @@ const MovieDetailPage = () => {
                             )}
                             {movie.voteAverage && (
                                 <Chip
-                                    label={`★ ${movie.voteAverage.toFixed(
-                                        1
-                                    )}`}
+                                    label={`★ ${movie.voteAverage.toFixed(1)}`}
                                     size="small"
                                     color="secondary"
                                 />
@@ -205,8 +231,8 @@ const MovieDetailPage = () => {
                     <Box
                         component="iframe"
                         src={videoUrl}
+                        // sandbox={'allow-scripts'}
                         allow="fullscreen; autoplay; picture-in-picture"
-                        // sandbox="allow-scripts allow-same-origin allow-presentation"
                         referrerPolicy="no-referrer"
                         allowFullScreen
                         sx={{

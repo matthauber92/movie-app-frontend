@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore } from 'redux-persist';
 import { moviesApiSlice } from './api/moviesApiSlice';
+import { tvApiSlice } from './api/tvApiSlice.ts';
 
 // const persistConfig = {
 //     key: 'root',
@@ -16,12 +17,13 @@ import { moviesApiSlice } from './api/moviesApiSlice';
 export const store = configureStore({
     reducer: {
         // persisted: persistedReducer,
-        [moviesApiSlice.reducerPath]: moviesApiSlice.reducer
+        [moviesApiSlice.reducerPath]: moviesApiSlice.reducer,
+        [tvApiSlice.reducerPath]: tvApiSlice.reducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
-            serializableCheck: false // required for redux-persist
-        }).concat(moviesApiSlice.middleware)
+            serializableCheck: false
+        }).concat(moviesApiSlice.middleware).concat(tvApiSlice.middleware)
 });
 
 export const persistor = persistStore(store);

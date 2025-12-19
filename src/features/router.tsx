@@ -1,22 +1,33 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { DiscoverPage, MovieDetailPage } from './discover';
+import { DiscoverMoviesPage, MovieDetailPage, DiscoverSeriesPage, SeriesDetailPage } from './discover';
+import TopBar from '../common/components/Topbar.tsx';
 
 export const router = createBrowserRouter([
     {
-        index: true,
         path: '/',
-        element: <DiscoverPage />
-    },
-    {
-        path: '/movies/:movieId',
-        element: <MovieDetailPage />
+        element: <TopBar />,
+        children: [
+            {
+                index: true,
+                path: 'movies',
+                element: <DiscoverMoviesPage />
+            },
+            {
+                path: 'series',
+                element: <DiscoverSeriesPage />
+            },
+            {
+                path: 'movies/:movieId',
+                element: <MovieDetailPage />
+            },
+            {
+                path: 'series/:seriesId',
+                element: <SeriesDetailPage />
+            }
+        ]
     }
     // {
-    //     path: '/tv/:tvId',
-    //     element: <TvDetail />,
-    // },
-    // {
-    //     path: '*',
-    //     element: <Navigate to="/" replace />,
+    //   path: '*',
+    //   element: <Navigate to="/" replace />,
     // },
 ]);

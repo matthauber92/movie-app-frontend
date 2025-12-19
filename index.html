@@ -1,13 +1,135 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>movie-app</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+    <!-- Aggressive CSP for local ad-block testing -->
+    <meta http-equiv="Content-Security-Policy" content="">
+
+    <title>Movie App</title>
+</head>
+
+<body>
+
+<script>
+    (function() {
+        /* -------------------- DOM REMOVAL -------------------- */
+
+        const AD_SELECTORS = [
+            // Containers
+            '.afs_ads',
+            '.ad-placement',
+            '[class*="ad-"]',
+            '[id*="ad-"]',
+
+            // Scripts
+            '#popads-script',
+            // 'script[referrerpolicy*="unsafe-url"]',
+            'script[src*="ads"]',
+            'script[src*="popup"]',
+            'script[src*="track"]',
+            'script[src*="analytics"]',
+            'script[src*="doubleclick"]',
+
+            // Anchors / popunders
+            'a[target="_blank"]',
+            'a[href^="//"]',
+
+            // Prefetch / preconnect
+            'link[rel="prefetch"]',
+            'link[rel="preconnect"]',
+            'link[rel="dns-prefetch"]',
+
+            // Hidden junk
+            'iframe[width="1"]',
+            'iframe[height="1"]',
+            'iframe[style*="display"]',
+            'img[width="1"]',
+            'img[height="1"]'
+        ];
+
+        function purge(root = document) {
+            AD_SELECTORS.forEach(sel => {
+                root.querySelectorAll(sel).forEach(el => {
+                    try {
+                        el.remove();
+                    } catch {
+                    }
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', purge);
+        } else {
+            purge();
+        }
+
+        new MutationObserver(mutations => {
+            for (const m of mutations) {
+                m.addedNodes.forEach(n => {
+                    if (n.nodeType === 1) purge(n);
+                });
+            }
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+
+        /* -------------------- POPUP / NAV BLOCKING -------------------- */
+
+        // Kill window.open completely
+        window.open = () => null;
+
+        // Block location hijacking
+        ['assign', 'replace'].forEach(fn => {
+            try {
+                Object.defineProperty(window.location, fn, {
+                    configurable: false,
+                    writable: false,
+                    value: () => {
+                    }
+                });
+            } catch {
+            }
+        });
+
+        // Kill document.write vectors
+        document.write = document.writeln = () => {
+        };
+
+        /* -------------------- TRACKING API NEUTRALIZATION -------------------- */
+
+        [
+            'ga', 'gtag', 'dataLayer',
+            'fbq', '_paq',
+            'popads', 'PopAds', 'IntelliPopup'
+        ].forEach(name => {
+            try {
+                Object.defineProperty(window, name, {
+                    get: () => undefined,
+                    set: () => {
+                    },
+                    configurable: false
+                });
+            } catch {
+            }
+        });
+
+        // Disable beaconing
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon = () => false;
+        }
+
+    })();
+</script>
+
+<div id="root"></div>
+
+<script type="module" src="/src/main.tsx"></script>
+
+</body>
 </html>
