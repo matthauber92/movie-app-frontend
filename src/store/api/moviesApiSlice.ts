@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { TmdbDiscoverResponse, SearchResultDto, TmdbMovie } from '../interfaces/Movie';
 import { mapResponse } from '../../common/utils/transformResponse.ts';
 
-const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/movies`;
+const baseUrl = '/api/movies';
 
 export const moviesApiSlice = createApi({
     reducerPath: 'moviesApi',
