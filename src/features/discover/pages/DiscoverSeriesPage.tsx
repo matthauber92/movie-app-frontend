@@ -4,7 +4,8 @@ import {
     Chip,
     Stack,
     Autocomplete,
-    TextField, Typography
+    TextField,
+    CircularProgress
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,16 +13,31 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import ContentCard from '../components/ContentCard';
 import TopBar from '../../../common/components/Topbar';
-import { useGetTvQuery, useSearchTvQuery } from '../../../store/api/tvApiSlice';
+import {
+    useGetTvQuery,
+    useSearchTvQuery
+} from '../../../store/api/tvApiSlice';
+
 import type { TmdbTvResult } from '../../../store/interfaces/Tv';
 import type { SearchResultDto } from '../../../store/interfaces/Movie';
 import { useInfiniteScroll, useDebouncedValue } from '../../../../hooks';
 import { TV_GENRES } from '../../../common';
 
+/* =============================================================================
+   DISCOVER SERIES (DESKTOP + TV COMPATIBLE)
+============================================================================= */
+
 const DiscoverSeriesPage = () => {
     const navigate = useNavigate();
 
-    /* ------------------------------ AUTOCOMPLETE SEARCH ------------------------------ */
+    /* -------------------------------------------------------------------------
+       MODE DETECTION
+    ------------------------------------------------------------------------- */
+    const isTvMode = window.matchMedia('(hover: none)').matches;
+
+    /* -------------------------------------------------------------------------
+       SEARCH (DESKTOP-FIRST)
+    ------------------------------------------------------------------------- */
     const [searchInput, setSearchInput] = useState('');
     const debouncedSearch = useDebouncedValue(searchInput, 350);
 
@@ -30,10 +46,14 @@ const DiscoverSeriesPage = () => {
         isFetching: isSearching
     } = useSearchTvQuery(
         { query: debouncedSearch, page: 1 },
-        { skip: debouncedSearch.trim().length < 2 }
+        {
+            skip: isTvMode || debouncedSearch.trim().length < 2
+        }
     );
 
-    /* ------------------------------ DISCOVER STATE ------------------------------ */
+    /* -------------------------------------------------------------------------
+       DISCOVER STATE
+    ------------------------------------------------------------------------- */
     const [page, setPage] = useState(1);
     const [items, setItems] = useState<TmdbTvResult[]>([]);
     const [selectedGenre, setSelectedGenre] = useState<number | null>(-1);
@@ -49,156 +69,185 @@ const DiscoverSeriesPage = () => {
 
     const hasMore = Boolean(data?.results?.length);
 
-    /* ------------------------------ APPEND RESULTS ------------------------------ */
+    /* -------------------------------------------------------------------------
+       APPEND RESULTS
+    ------------------------------------------------------------------------- */
     useEffect(() => {
         if (!data?.results) return;
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setItems(prev => {
-            const existingIds = new Set(prev.map(s => s.id));
-            const next = data.results.filter(s => !existingIds.has(s.id));
+            const ids = new Set(prev.map(s => s.id));
+            const next = data.results.filter(s => !ids.has(s.id));
             return [...prev, ...next];
         });
     }, [data]);
 
-    /* ------------------------------ INFINITE SCROLL ------------------------------ */
+    /* -------------------------------------------------------------------------
+       INFINITE SCROLL (DESKTOP ONLY)
+    ------------------------------------------------------------------------- */
     const loadMoreRef = useInfiniteScroll(
         () => setPage(p => p + 1),
-        isFetching,
+        isFetching || isTvMode,
         hasMore
     );
 
-    /* ------------------------------ GENRE HANDLER ------------------------------ */
+    /* -------------------------------------------------------------------------
+       GENRE HANDLER
+    ------------------------------------------------------------------------- */
     const handleGenreChange = (genreId: number | null) => {
         setSelectedGenre(genreId);
         setItems([]);
         setPage(1);
     };
 
+    /* -------------------------------------------------------------------------
+       TV PAGINATION (FOCUS-DRIVEN)
+    ------------------------------------------------------------------------- */
+    const handleGridKeyDown = (e: React.KeyboardEvent) => {
+        if (!isTvMode) return;
+
+        if (
+            e.key === 'ArrowDown' &&
+            hasMore &&
+            !isFetching
+        ) {
+            setPage(p => p + 1);
+        }
+    };
+
+    /* -------------------------------------------------------------------------
+       RENDER
+    ------------------------------------------------------------------------- */
     return (
         <>
             <TopBar />
 
             <Box sx={{ px: { xs: 2, md: 4 }, pt: 12 }}>
-                {/* 🔍 SEARCH */}
-                <Box sx={{ mb: 3, maxWidth: 520 }}>
-                    <Autocomplete<SearchResultDto, false, false, false>
-                        options={searchResults ?? []}
-                        loading={isSearching}
-                        filterOptions={(x) => x}
-                        getOptionLabel={(option) => option.title}
-                        getOptionKey={(option) => `${option.type}-${option.id}`}
-                        onChange={(_, value) => {
-                            if (!value) return;
-                            navigate(`/series/${value.id}`);
-                            setSearchInput('');
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                placeholder="Find a series"
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                InputProps={{
-                                    ...params.InputProps,
-                                    startAdornment: (
-                                        <>
-                                            <SearchIcon sx={{ mr: 1 }} />
-                                            {params.InputProps.startAdornment}
-                                        </>
-                                    )
-                                }}
-                            />
-                        )}
-                        renderOption={(props, option) => (
-                            <Box
-                                component="li"
-                                {...props}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1
-                                }}
-                            >
-                                {option.imagePath && (
-                                    <img
-                                        src={`https://image.tmdb.org/t/p/w92${option.imagePath}`}
-                                        alt={option.title}
-                                        width={40}
-                                        height={60}
-                                        style={{
-                                            objectFit: 'cover',
-                                            borderRadius: 6
-                                        }}
-                                    />
-                                )}
+                {/* SEARCH (DESKTOP ONLY) */}
+                {!isTvMode && (
+                    <Box sx={{ mb: 3, maxWidth: 520 }}>
+                        <Autocomplete<SearchResultDto, false, false, false>
+                            options={searchResults ?? []}
+                            loading={isSearching}
+                            filterOptions={(x) => x}
+                            getOptionLabel={(option) => option.title}
+                            onChange={(_, value) => {
+                                if (!value) return;
+                                navigate(`/series/${value.id}`);
+                                setSearchInput('');
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    placeholder="Find a series"
+                                    onChange={(e) =>
+                                        setSearchInput(e.target.value)
+                                    }
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        startAdornment: (
+                                            <>
+                                                <SearchIcon sx={{ mr: 1 }} />
+                                                {params.InputProps.startAdornment}
+                                            </>
+                                        ),
+                                        endAdornment: (
+                                            <>
+                                                {isSearching && (
+                                                    <CircularProgress
+                                                        size={18}
+                                                        sx={{ mr: 1 }}
+                                                    />
+                                                )}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        )
+                                    }}
+                                />
+                            )}
+                        />
+                    </Box>
+                )}
 
-                                <Box>
-                                    <Typography fontWeight={600}>
-                                        {option.title}
-                                    </Typography>
-                                    {option.subtitle && (
-                                        <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                        >
-                                            {option.subtitle}
-                                        </Typography>
-                                    )}
-                                </Box>
-                            </Box>
-                        )}
-                    />
-                </Box>
-
+                {/* GENRES (CLICK + FOCUS SAFE) */}
                 <Stack
                     direction="row"
-                    spacing={1}
-                    sx={{ mb: 3, overflowX: 'auto', pb: 1 }}
+                    spacing={2}
+                    sx={{ mb: 4, overflowX: 'auto', pb: 1 }}
                 >
                     {TV_GENRES.map(genre => (
                         <Chip
                             key={genre.id}
+                            tabIndex={0}
                             label={genre.name}
-                            clickable
                             onClick={() => handleGenreChange(genre.id)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleGenreChange(genre.id);
+                                }
+                            }}
                             sx={{
                                 borderRadius: 999,
-                                px: 1.5,
-                                fontWeight: 600,
+                                px: 2,
+                                fontWeight: 700,
+                                outline: 'none',
                                 whiteSpace: 'nowrap',
                                 backgroundColor:
                                     selectedGenre === genre.id
-                                        ? 'rgba(255,255,255,0.18)'
+                                        ? 'rgba(255,255,255,0.2)'
                                         : 'rgba(255,255,255,0.08)',
-                                color: 'white'
+                                color: 'white',
+                                '&:focus-visible': {
+                                    outline:
+                                        '2px solid rgba(0,200,255,0.9)',
+                                    outlineOffset: 4
+                                }
                             }}
                         />
                     ))}
                 </Stack>
 
-                {/* 📺 GRID */}
-                <Grid container spacing={2}>
-                    {items.map(show => (
-                        <ContentCard
-                            key={show.id}
-                            type="series"
-                            item={{
-                                id: show.id,
-                                title: show.name ?? show.originalName ?? 'Unknown',
-                                posterPath: show.posterPath,
-                                releaseDate: show.firstAirDate as string | undefined,
-                                voteAverage: show.voteAverage
-                            }}
-                        />
-                    ))}
-
-                    {(isLoading || isFetching) &&
-                        Array.from({ length: 8 }).map((_, i) => (
-                            <ContentCard key={`s-${i}`} type="series" />
+                {/* GRID */}
+                <Box
+                    tabIndex={isTvMode ? 0 : -1}
+                    onKeyDown={handleGridKeyDown}
+                >
+                    <Grid container spacing={isTvMode ? 4 : 2}>
+                        {items.map(show => (
+                            <ContentCard
+                                key={show.id}
+                                type="series"
+                                item={{
+                                    id: show.id,
+                                    title:
+                                        show.name ??
+                                        show.originalName ??
+                                        'Unknown',
+                                    posterPath: show.posterPath,
+                                    releaseDate:
+                                        show.firstAirDate as string | undefined,
+                                    voteAverage: show.voteAverage
+                                }}
+                            />
                         ))}
-                </Grid>
 
-                <Box ref={loadMoreRef} sx={{ height: 1 }} />
+                        {(isLoading || isFetching) &&
+                            Array.from({
+                                length: isTvMode ? 6 : 8
+                            }).map((_, i) => (
+                                <ContentCard
+                                    key={`s-${i}`}
+                                    type="series"
+                                />
+                            ))}
+                    </Grid>
+                </Box>
+
+                {/* DESKTOP INFINITE SCROLL SENTINEL */}
+                {!isTvMode && (
+                    <Box ref={loadMoreRef} sx={{ height: 1 }} />
+                )}
             </Box>
         </>
     );

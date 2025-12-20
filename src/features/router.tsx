@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { DiscoverMoviesPage, MovieDetailPage, DiscoverSeriesPage, SeriesDetailPage } from './discover';
 import TopBar from '../common/components/Topbar.tsx';
+import { HomePage } from './home';
 
 export const router = createBrowserRouter([
     {
@@ -9,6 +10,10 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
+                path: '',
+                element: <HomePage />
+            },
+            {
                 path: 'movies',
                 element: <DiscoverMoviesPage />
             },
