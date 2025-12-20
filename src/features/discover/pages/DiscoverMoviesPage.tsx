@@ -71,9 +71,6 @@ const DiscoverMoviesPage = () => {
 
     const hasMore = Boolean(data?.results?.length);
 
-    /* -------------------------------------------------------------------------
-       APPEND RESULTS
-    ------------------------------------------------------------------------- */
     useEffect(() => {
         if (!data?.results) return;
 
