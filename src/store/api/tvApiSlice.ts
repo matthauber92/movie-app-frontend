@@ -3,7 +3,7 @@ import { mapResponse } from '../../common/utils/transformResponse';
 import { type TmdbTvResult, TmdbTvSearchResponse } from '../interfaces/Tv.ts';
 import type { SearchResultDto } from '../interfaces/Movie.ts';
 
-const baseUrl = '/api/tv';
+const baseUrl = `${import.meta.env.VITE_API_BASE_URL}/api/tv`;
 
 export const tvApiSlice = createApi({
     reducerPath: 'tvApi',

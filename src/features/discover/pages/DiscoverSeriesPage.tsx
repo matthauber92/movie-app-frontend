@@ -2,58 +2,23 @@ import {
     Box,
     Grid,
     Chip,
-    Stack,
-    Autocomplete,
-    TextField,
-    CircularProgress
+    Stack
 } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import SearchIcon from '@mui/icons-material/Search';
 
 import ContentCard from '../components/ContentCard';
 import TopBar from '../../../common/components/Topbar';
 import {
-    useGetTvQuery,
-    useSearchTvQuery
+    useGetTvQuery
 } from '../../../store/api/tvApiSlice';
 
 import type { TmdbTvResult } from '../../../store/interfaces/Tv';
-import type { SearchResultDto } from '../../../store/interfaces/Movie';
-import { useInfiniteScroll, useDebouncedValue } from '../../../../hooks';
+import { useInfiniteScroll } from '../../../../hooks';
 import { TV_GENRES } from '../../../common';
 
-/* =============================================================================
-   DISCOVER SERIES (DESKTOP + TV COMPATIBLE)
-============================================================================= */
-
 const DiscoverSeriesPage = () => {
-    const navigate = useNavigate();
-
-    /* -------------------------------------------------------------------------
-       MODE DETECTION
-    ------------------------------------------------------------------------- */
     const isTvMode = window.matchMedia('(hover: none)').matches;
 
-    /* -------------------------------------------------------------------------
-       SEARCH (DESKTOP-FIRST)
-    ------------------------------------------------------------------------- */
-    const [searchInput, setSearchInput] = useState('');
-    const debouncedSearch = useDebouncedValue(searchInput, 350);
-
-    const {
-        data: searchResults,
-        isFetching: isSearching
-    } = useSearchTvQuery(
-        { query: debouncedSearch, page: 1 },
-        {
-            skip: isTvMode || debouncedSearch.trim().length < 2
-        }
-    );
-
-    /* -------------------------------------------------------------------------
-       DISCOVER STATE
-    ------------------------------------------------------------------------- */
     const [page, setPage] = useState(1);
     const [items, setItems] = useState<TmdbTvResult[]>([]);
     const [selectedGenre, setSelectedGenre] = useState<number | null>(-1);
@@ -83,9 +48,6 @@ const DiscoverSeriesPage = () => {
         });
     }, [data]);
 
-    /* -------------------------------------------------------------------------
-       INFINITE SCROLL (DESKTOP ONLY)
-    ------------------------------------------------------------------------- */
     const loadMoreRef = useInfiniteScroll(
         () => setPage(p => p + 1),
         isFetching || isTvMode,
@@ -124,52 +86,6 @@ const DiscoverSeriesPage = () => {
             <TopBar />
 
             <Box sx={{ px: { xs: 2, md: 4 }, pt: 12 }}>
-                {/* SEARCH (DESKTOP ONLY) */}
-                {!isTvMode && (
-                    <Box sx={{ mb: 3, maxWidth: 520 }}>
-                        <Autocomplete<SearchResultDto, false, false, false>
-                            options={searchResults ?? []}
-                            loading={isSearching}
-                            filterOptions={(x) => x}
-                            getOptionLabel={(option) => option.title}
-                            onChange={(_, value) => {
-                                if (!value) return;
-                                navigate(`/series/${value.id}`);
-                                setSearchInput('');
-                            }}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    placeholder="Find a series"
-                                    onChange={(e) =>
-                                        setSearchInput(e.target.value)
-                                    }
-                                    InputProps={{
-                                        ...params.InputProps,
-                                        startAdornment: (
-                                            <>
-                                                <SearchIcon sx={{ mr: 1 }} />
-                                                {params.InputProps.startAdornment}
-                                            </>
-                                        ),
-                                        endAdornment: (
-                                            <>
-                                                {isSearching && (
-                                                    <CircularProgress
-                                                        size={18}
-                                                        sx={{ mr: 1 }}
-                                                    />
-                                                )}
-                                                {params.InputProps.endAdornment}
-                                            </>
-                                        )
-                                    }}
-                                />
-                            )}
-                        />
-                    </Box>
-                )}
-
                 {/* GENRES (CLICK + FOCUS SAFE) */}
                 <Stack
                     direction="row"

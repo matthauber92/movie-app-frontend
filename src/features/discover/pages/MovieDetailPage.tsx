@@ -218,7 +218,13 @@ const MovieDetailPage = () => {
 
                 <Divider sx={{ my: 6 }} />
 
-                {/* ▶️ PLAYER */}
+                {/* PLAYER */}
+                {/*<video*/}
+                {/*    controls*/}
+                {/*    autoPlay*/}
+                {/*    style={{ width: '100%', background: 'black' }}*/}
+                {/*    src="https://vidlink.pro/api/b/movie/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmC8s6xo-dtZm1T4JtIFA58eKAMh5dVYZ2cQjzkuy?multiLang=0"*/}
+                {/*/>*/}
                 <Box
                     sx={{
                         position: 'relative',
