@@ -12,14 +12,58 @@ import {
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetMovieByIdQuery } from '../../../store/api/moviesApiSlice';
+import { useEffect } from 'react';
 
 const MovieDetailPage = () => {
+
     const { movieId } = useParams<{ movieId: string }>();
     const navigate = useNavigate();
     const theme = useTheme();
 
     const { data: movie, isLoading, isError } =
         useGetMovieByIdQuery(Number(movieId));
+
+    useEffect(() => {
+        const originalOpen = window.open;
+
+        window.open = function(...args) {
+            console.warn('Blocked popup:', args[0]);
+            return null;
+        };
+
+        return () => {
+            window.open = originalOpen;
+        };
+    }, []);
+
+    useEffect(() => {
+        const originalHref = window.location.href;
+
+        const interval = setInterval(() => {
+            if (window.location.href !== originalHref) {
+                console.warn('Blocked navigation to:', window.location.href);
+                window.location.replace(originalHref);
+            }
+        }, 200);
+
+        return () => clearInterval(interval);
+    }, []);
+
+
+    useEffect(() => {
+        const onFocus = () => {
+            // If focus changes suddenly, an ad likely opened
+            if (document.visibilityState === 'hidden') {
+                setTimeout(() => {
+                    window.focus();
+                }, 0);
+            }
+        };
+
+        window.addEventListener('blur', onFocus);
+        return () => window.removeEventListener('blur', onFocus);
+    }, []);
+
 
     if (isLoading) {
         return (
@@ -238,7 +282,7 @@ const MovieDetailPage = () => {
                     <Box
                         component="iframe"
                         src={videoUrl}
-                        // sandbox={'allow-scripts'}
+                        // sandbox="allow-scripts allow-same-origin"
                         allow="fullscreen; autoplay; picture-in-picture"
                         referrerPolicy="no-referrer"
                         allowFullScreen

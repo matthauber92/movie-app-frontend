@@ -33,10 +33,6 @@ const DiscoverSeriesPage = () => {
     });
 
     const hasMore = Boolean(data?.results?.length);
-
-    /* -------------------------------------------------------------------------
-       APPEND RESULTS
-    ------------------------------------------------------------------------- */
     useEffect(() => {
         if (!data?.results) return;
 
@@ -53,19 +49,12 @@ const DiscoverSeriesPage = () => {
         isFetching || isTvMode,
         hasMore
     );
-
-    /* -------------------------------------------------------------------------
-       GENRE HANDLER
-    ------------------------------------------------------------------------- */
     const handleGenreChange = (genreId: number | null) => {
         setSelectedGenre(genreId);
         setItems([]);
         setPage(1);
     };
 
-    /* -------------------------------------------------------------------------
-       TV PAGINATION (FOCUS-DRIVEN)
-    ------------------------------------------------------------------------- */
     const handleGridKeyDown = (e: React.KeyboardEvent) => {
         if (!isTvMode) return;
 
@@ -78,9 +67,6 @@ const DiscoverSeriesPage = () => {
         }
     };
 
-    /* -------------------------------------------------------------------------
-       RENDER
-    ------------------------------------------------------------------------- */
     return (
         <>
             <TopBar />

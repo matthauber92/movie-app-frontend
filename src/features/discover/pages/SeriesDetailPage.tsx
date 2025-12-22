@@ -23,12 +23,51 @@ const SeriesDetailPage = () => {
 
     const { data: series, isLoading, isError } =
         useGetTvByIdQuery(Number(seriesId));
-
-    /* ------------------------------ PLAYER STATE ------------------------------ */
     const [season, setSeason] = useState(1);
     const [episode, setEpisode] = useState(1);
 
-    // Prefer real season list (TMDB includes specials season_number = 0)
+
+    useEffect(() => {
+        const originalOpen = window.open;
+
+        window.open = function(...args) {
+            console.warn('Blocked popup:', args[0]);
+            return null;
+        };
+
+        return () => {
+            window.open = originalOpen;
+        };
+    }, []);
+
+    useEffect(() => {
+        const originalHref = window.location.href;
+
+        const interval = setInterval(() => {
+            if (window.location.href !== originalHref) {
+                console.warn('Blocked navigation to:', window.location.href);
+                window.location.replace(originalHref);
+            }
+        }, 200);
+
+        return () => clearInterval(interval);
+    }, []);
+
+
+    useEffect(() => {
+        const onFocus = () => {
+            // If focus changes suddenly, an ad likely opened
+            if (document.visibilityState === 'hidden') {
+                setTimeout(() => {
+                    window.focus();
+                }, 0);
+            }
+        };
+
+        window.addEventListener('blur', onFocus);
+        return () => window.removeEventListener('blur', onFocus);
+    }, []);
+
     const seasons = useMemo(() => {
         const list = series?.seasons ?? [];
         // HBO-ish: hide Specials by default. If you want Specials, remove this filter.
@@ -94,7 +133,8 @@ const SeriesDetailPage = () => {
         ? `https://image.tmdb.org/t/p/original${series.backdropPath}`
         : null;
 
-    const seriesUrl = `https://vidlink.pro/tv/${seriesId}/${season}/${episode}?primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=true`;
+    // const seriesUrl = `https://vidlink.pro/tv/${seriesId}/${season}/${episode}?primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=true`;
+    const seriesUrl = `https://player.videasy.net/tv/${seriesId}/${season}/${episode}`;
 
     return (
         <Box sx={{ mt: 5 }}>
