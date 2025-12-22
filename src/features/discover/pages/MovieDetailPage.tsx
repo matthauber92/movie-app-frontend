@@ -52,7 +52,7 @@ const MovieDetailPage = () => {
         ? `https://image.tmdb.org/t/p/w780${movie.backdropPath}`
         : null;
 
-    const videoUrl = `https://vidlink.pro/movie/${movie.id}?player=jw&nextbutton=true`;
+    const videoUrl = `https://vidlink.pro/movie/${movie.id}?player=jw&primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=falseprimaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=false`;
 
     return (
         <Box sx={{ mt: 5 }}>

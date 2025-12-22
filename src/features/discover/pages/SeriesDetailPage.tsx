@@ -94,7 +94,7 @@ const SeriesDetailPage = () => {
         ? `https://image.tmdb.org/t/p/original${series.backdropPath}`
         : null;
 
-    const seriesUrl = `https://vidlink.pro/tv/${seriesId}/${season}/${episode}?nextbutton=true`;
+    const seriesUrl = `https://vidlink.pro/tv/${seriesId}/${season}/${episode}?primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=true`;
 
     return (
         <Box sx={{ mt: 5 }}>
