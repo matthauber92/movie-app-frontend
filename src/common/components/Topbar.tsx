@@ -139,12 +139,9 @@ const TopBar = () => {
         setSearchOpen(true);
     };
 
-    /* ---- search component ---- */
     const SearchComponent = (
         <SearchWrapper
             onMouseDown={() => {
-                // Clicking anywhere in the pill should focus the input
-                // (mouseDown fires before blur behavior / menu close logic)
                 inputRef.current?.focus();
             }}
         >
@@ -158,7 +155,7 @@ const TopBar = () => {
                 onChange={(_, value) => {
                     if (!value) return;
                     handleCloseSearch();
-                    navigate(`/${value.type}/${value.id}`);
+                    navigate(`/${value.type === 'tv' ? 'series' : 'movies'}/${value.id}`);
                 }}
                 PaperComponent={(props) => (
                     <Paper
