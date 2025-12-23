@@ -20,6 +20,7 @@
     "@mui/x-date-pickers": "^8.22.1",
     "@reduxjs/toolkit": "^2.11.2",
     "@toolpad/core": "^0.16.0",
+    "@vercel/analytics": "^1.6.1",
     "@vitejs/plugin-react-swc": "^4.2.2",
     "dayjs": "^1.11.19",
     "husky": "^9.1.7",
