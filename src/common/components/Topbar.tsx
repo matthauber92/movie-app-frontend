@@ -7,7 +7,6 @@ import {
     Autocomplete,
     TextField,
     CircularProgress,
-    Paper,
     IconButton,
     Menu,
     MenuItem,
@@ -35,16 +34,12 @@ type SearchResult = {
     imagePath?: string | null;
 };
 
-/* ----------------------------- */
-/* Styled Search Container       */
-/* ----------------------------- */
 const SearchWrapper = styled(Box)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     width: '100%',
-    borderRadius: 999,
     backgroundColor: alpha('#fff', 0.08),
-    transition: 'all 200ms ease',
+    transition: 'background-color 160ms ease, box-shadow 160ms ease',
     cursor: 'text',
 
     '&:hover': {
@@ -52,14 +47,11 @@ const SearchWrapper = styled(Box)(({ theme }) => ({
     },
 
     '&:focus-within': {
-        backgroundColor: alpha('#fff', 0.18),
-        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.5)}`
+        backgroundColor: alpha('#fff', 0.16),
+        boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.35)}`
     }
 }));
 
-/* ----------------------------- */
-/* Desktop Nav Item              */
-/* ----------------------------- */
 const NavItem = ({ to, label }: { to: string; label: string }) => (
     <Typography
         component={NavLink}
@@ -96,6 +88,16 @@ const TopBar = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+    /* ---- scroll state ---- */
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 12);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
     /* ---- search state ---- */
     const [searchInput, setSearchInput] = useState('');
     const [searchOpen, setSearchOpen] = useState(false);
@@ -105,7 +107,6 @@ const TopBar = () => {
     const menuOpen = Boolean(menuAnchor);
 
     const inputRef = useRef<HTMLInputElement | null>(null);
-
     const debouncedSearch = useDebouncedValue(searchInput, 350);
 
     const {
@@ -116,7 +117,6 @@ const TopBar = () => {
         { skip: debouncedSearch.trim().length < 2 }
     );
 
-    // Ensure we’re strongly typed in this component even if RTK query is loosely typed.
     const searchResults = useMemo<SearchResult[]>(
         () => (rawSearchResults ?? []) as SearchResult[],
         [rawSearchResults]
@@ -124,56 +124,26 @@ const TopBar = () => {
 
     useEffect(() => {
         if (!searchOpen) return;
-        // Focus after slide mounts.
-        const t = window.setTimeout(() => inputRef.current?.focus(), 50);
-        return () => window.clearTimeout(t);
+        const t = setTimeout(() => inputRef.current?.focus(), 50);
+        return () => clearTimeout(t);
     }, [searchOpen]);
 
-    const handleCloseSearch = () => {
-        setSearchOpen(false);
-        // Optional: clear search
-        // setSearchInput('');
-    };
-
-    const handleOpenSearch = () => {
-        setSearchOpen(true);
-    };
-
     const SearchComponent = (
-        <SearchWrapper
-            onMouseDown={() => {
-                inputRef.current?.focus();
-            }}
-        >
+        <SearchWrapper onMouseDown={() => inputRef.current?.focus()}>
             <Autocomplete<SearchResult, false, false, false>
                 options={searchResults}
                 loading={isSearching}
-                filterOptions={(x) => x} // do not re-filter client-side
+                filterOptions={(x) => x}
                 getOptionLabel={(option) => option.title ?? ''}
                 popupIcon={null}
                 fullWidth
                 onChange={(_, value) => {
                     if (!value) return;
-                    handleCloseSearch();
+                    setSearchOpen(false);
                     navigate(`/${value.type === 'tv' ? 'series' : 'movies'}/${value.id}`);
                 }}
-                PaperComponent={(props) => (
-                    <Paper
-                        {...props}
-                        sx={{
-                            mt: 1,
-                            borderRadius: 2,
-                            overflow: 'hidden'
-                        }}
-                    />
-                )}
                 sx={{
-                    width: '100%',
-                    // Make sure the root stretches so the entire pill is clickable/interactive
-                    '& .MuiAutocomplete-inputRoot': {
-                        width: '100%',
-                        px: 0
-                    }
+                    '& .MuiAutocomplete-inputRoot': { px: 0 }
                 }}
                 renderInput={(params) => (
                     <TextField
@@ -187,20 +157,13 @@ const TopBar = () => {
                             disableUnderline: true,
                             startAdornment: (
                                 <>
-                                    <SearchIcon
-                                        sx={{
-                                            color: 'rgba(255,255,255,0.7)',
-                                            mr: 1
-                                        }}
-                                    />
+                                    <SearchIcon sx={{ color: 'rgba(255,255,255,0.7)', mr: 1 }} />
                                     {params.InputProps.startAdornment}
                                 </>
                             ),
                             endAdornment: (
                                 <>
-                                    {isSearching && (
-                                        <CircularProgress size={16} sx={{ mr: 1 }} />
-                                    )}
+                                    {isSearching && <CircularProgress size={16} sx={{ mr: 1 }} />}
                                     {params.InputProps.endAdornment}
                                 </>
                             ),
@@ -208,19 +171,11 @@ const TopBar = () => {
                                 px: 2,
                                 py: 1.5,
                                 color: 'white',
-                                width: '100%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 1,
-                                '& input': {
-                                    width: '100%',
-                                    flex: 1,
-                                    minWidth: 0,
-                                    cursor: 'text'
-                                },
                                 '& input::placeholder': {
-                                    color: 'rgba(255,255,255,0.6)',
-                                    opacity: 1
+                                    color: 'rgba(255,255,255,0.6)'
                                 }
                             }
                         }}
@@ -233,39 +188,41 @@ const TopBar = () => {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 1.5,
+                            gap: 1.25,
                             px: 2,
-                            py: 1
+                            py: 0.75,
+                            '&:hover, &.Mui-focused': {
+                                backgroundColor: 'rgba(255,255,255,0.06)'
+                            }
                         }}
                     >
-                        {option.imagePath && (
-                            <Box
-                                component="img"
-                                src={`https://image.tmdb.org/t/p/w92${option.imagePath}`}
-                                alt={option.title}
-                                sx={{
-                                    width: 36,
-                                    height: 54,
-                                    borderRadius: 1,
-                                    objectFit: 'cover',
-                                    flexShrink: 0
-                                }}
-                            />
-                        )}
+                        <Box
+                            sx={{
+                                width: 40,
+                                height: 56,
+                                borderRadius: 0.75,
+                                overflow: 'hidden',
+                                backgroundColor: 'rgba(255,255,255,0.08)',
+                                flexShrink: 0
+                            }}
+                        >
+                            {option.imagePath && (
+                                <Box
+                                    component="img"
+                                    src={`https://image.tmdb.org/t/p/w92${option.imagePath}`}
+                                    alt={option.title}
+                                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            )}
+                        </Box>
 
-                        <Box sx={{ minWidth: 0, flex: 1 }}>
-                            <Typography fontWeight={700} noWrap>
+                        <Box sx={{ minWidth: 0 }}>
+                            <Typography noWrap fontSize={14} fontWeight={500}>
                                 {option.title}
                             </Typography>
-
-                            <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                noWrap
-                                sx={{ display: 'block' }}
-                            >
-                                {option.subtitle ? `${option.subtitle} · ` : ''}
-                                {String(option.type).toUpperCase()}
+                            <Typography noWrap fontSize={12} color="rgba(255,255,255,0.6)">
+                                {option.subtitle && `${option.subtitle} · `}
+                                {option.type === 'tv' ? 'TV Series' : 'Movie'}
                             </Typography>
                         </Box>
                     </Box>
@@ -280,35 +237,25 @@ const TopBar = () => {
                 elevation={0}
                 position="fixed"
                 sx={{
-                    background:
-                        'linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,0,0,0.65), rgba(0,0,0,0))',
-                    backdropFilter: 'blur(6px)',
+                    background: scrolled
+                        ? 'rgba(0,0,0,0.92)'
+                        : 'linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,0,0,0.65), rgba(0,0,0,0))',
+                    backdropFilter: scrolled ? 'blur(10px)' : 'blur(6px)',
+                    transition: 'background 200ms ease, backdrop-filter 200ms ease',
                     px: { xs: 2, md: 6 }
                 }}
             >
                 <Toolbar sx={{ minHeight: 72 }}>
-                    {/* MOBILE MENU */}
                     {isMobile && (
-                        <IconButton
-                            color="inherit"
-                            onClick={(e) => setMenuAnchor(e.currentTarget)}
-                            sx={{ mr: 1 }}
-                            aria-label="Open navigation"
-                        >
+                        <IconButton onClick={(e) => setMenuAnchor(e.currentTarget)}>
                             <MenuIcon />
                         </IconButton>
                     )}
 
-                    {/* LOGO */}
-                    <Typography
-                        fontWeight={900}
-                        sx={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/')}
-                    >
+                    <Typography fontWeight={900} sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
                         H²Tv
                     </Typography>
 
-                    {/* DESKTOP NAV */}
                     {!isMobile && (
                         <Box sx={{ ml: 6, display: 'flex' }}>
                             <NavItem to="/movies" label="Movies" />
@@ -318,67 +265,38 @@ const TopBar = () => {
 
                     <Box sx={{ flexGrow: 1 }} />
 
-                    {/* SEARCH ICON (ALL SIZES) */}
-                    <IconButton
-                        color="inherit"
-                        onClick={handleOpenSearch}
-                        aria-label="Search"
-                    >
+                    <IconButton onClick={() => setSearchOpen(true)}>
                         <SearchIcon />
                     </IconButton>
                 </Toolbar>
 
-                {/* SEARCH SLIDE-DOWN */}
                 <Slide direction="down" in={searchOpen} mountOnEnter unmountOnExit>
                     <Box
                         sx={{
                             px: { xs: 2, md: 6 },
                             pb: 2,
-                            backgroundColor: 'rgba(0,0,0,0.95)'
+                            backgroundColor: scrolled ? 'rgba(0,0,0,0.96)' : 'rgba(0,0,0,0.95)',
+                            backdropFilter: 'blur(10px)'
                         }}
                     >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ flexGrow: 1 }}>{SearchComponent}</Box>
-                            <IconButton
-                                onClick={handleCloseSearch}
-                                aria-label="Close search"
-                            >
-                                <CloseIcon sx={{ color: 'white' }} />
+                            <IconButton onClick={() => setSearchOpen(false)}>
+                                <CloseIcon />
                             </IconButton>
                         </Box>
                     </Box>
                 </Slide>
             </AppBar>
 
-            {/* MOBILE NAV MENU */}
             <Menu
                 anchorEl={menuAnchor}
                 open={menuOpen}
                 onClose={() => setMenuAnchor(null)}
-                PaperProps={{
-                    sx: {
-                        backgroundColor: '#111',
-                        color: 'white',
-                        mt: 1
-                    }
-                }}
+                PaperProps={{ sx: { backgroundColor: '#111', color: 'white' } }}
             >
-                <MenuItem
-                    onClick={() => {
-                        setMenuAnchor(null);
-                        navigate('/movies');
-                    }}
-                >
-                    Movies
-                </MenuItem>
-                <MenuItem
-                    onClick={() => {
-                        setMenuAnchor(null);
-                        navigate('/series');
-                    }}
-                >
-                    Series
-                </MenuItem>
+                <MenuItem onClick={() => navigate('/movies')}>Movies</MenuItem>
+                <MenuItem onClick={() => navigate('/series')}>Series</MenuItem>
             </Menu>
 
             <Outlet />

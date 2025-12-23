@@ -1,5 +1,5 @@
 // src/theme.ts
-import { createTheme, type ThemeOptions } from '@mui/material/styles';
+import { alpha, createTheme, type ThemeOptions } from '@mui/material/styles';
 
 declare module '@mui/material/styles' {
     interface Palette {
@@ -146,18 +146,6 @@ export function getAppTheme(mode: 'light' | 'dark') {
                     }
                 })
             },
-
-            // Paper/Card: no glossy shadows by default; rely on border + subtle shadow
-            MuiPaper: {
-                defaultProps: { elevation: 0 },
-                styleOverrides: {
-                    root: ({ theme }) => ({
-                        borderRadius: 16,
-                        border: `1px solid ${theme.palette.divider}`,
-                        backgroundImage: 'none'
-                    })
-                }
-            },
             MuiCard: {
                 styleOverrides: {
                     root: ({ theme }) => ({
@@ -241,6 +229,52 @@ export function getAppTheme(mode: 'light' | 'dark') {
                         borderRadius: 18,
                         border: `1px solid ${theme.palette.divider}`
                     })
+                }
+            },
+            MuiAutocomplete: {
+                styleOverrides: {
+                    paper: {
+                        marginTop: 8,
+                        borderRadius: 12,
+                        backgroundColor: '#0b0b0b',
+                        backgroundImage: 'none',
+                        boxShadow:
+                            '0 12px 40px rgba(0,0,0,0.6)'
+                    },
+
+                    listbox: {
+                        padding: 0
+                    },
+
+                    option: {
+                        minHeight: 'unset',
+                        padding: 0,
+
+                        '&[aria-selected="true"]': {
+                            backgroundColor: alpha('#fff', 0.08)
+                        },
+
+                        '&.Mui-focused': {
+                            backgroundColor: alpha('#fff', 0.06)
+                        }
+                    },
+
+                    noOptions: {
+                        padding: '12px 16px',
+                        color: alpha('#fff', 0.6)
+                    },
+
+                    loading: {
+                        padding: '12px 16px'
+                    }
+                }
+            },
+
+            MuiPaper: {
+                styleOverrides: {
+                    root: {
+                        backgroundImage: 'none'
+                    }
                 }
             }
         }
