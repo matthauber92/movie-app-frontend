@@ -12,10 +12,23 @@ import {
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetMovieByIdQuery } from '../../../store/api/moviesApiSlice';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+const SERVERS = [
+    {
+        id: 'videasy',
+        label: 'Server 1',
+        url: (id: number) => `https://player.videasy.net/movie/${id}`
+    },
+    {
+        id: 'vidlink',
+        label: 'Server 2',
+        url: (id: number) =>
+            `https://vidlink.pro/movie/${id}?player=jw&primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=falseprimaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=false`
+    }
+];
 
 const MovieDetailPage = () => {
-
     const { movieId } = useParams<{ movieId: string }>();
     const navigate = useNavigate();
     const theme = useTheme();
@@ -23,47 +36,48 @@ const MovieDetailPage = () => {
     const { data: movie, isLoading, isError } =
         useGetMovieByIdQuery(Number(movieId));
 
+    const [serverIndex, setServerIndex] = useState(0);
+    const [iframeKey, setIframeKey] = useState(0);
+    const [playerError, setPlayerError] = useState(false);
+
+    // Block popup windows
     useEffect(() => {
         const originalOpen = window.open;
-
         window.open = function(...args) {
             console.warn('Blocked popup:', args[0]);
             return null;
         };
-
         return () => {
             window.open = originalOpen;
         };
     }, []);
 
+    // Block forced navigation
     useEffect(() => {
         const originalHref = window.location.href;
-
         const interval = setInterval(() => {
             if (window.location.href !== originalHref) {
-                console.warn('Blocked navigation to:', window.location.href);
                 window.location.replace(originalHref);
             }
         }, 200);
-
         return () => clearInterval(interval);
     }, []);
 
-
+    // Detect failed load via timeout
     useEffect(() => {
-        const onFocus = () => {
-            // If focus changes suddenly, an ad likely opened
-            if (document.visibilityState === 'hidden') {
-                setTimeout(() => {
-                    window.focus();
-                }, 0);
-            }
-        };
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPlayerError(false);
+        const timeout = setTimeout(() => {
+            setPlayerError(true);
+        }, 6000);
+        return () => clearTimeout(timeout);
+    }, [serverIndex, iframeKey]);
 
-        window.addEventListener('blur', onFocus);
-        return () => window.removeEventListener('blur', onFocus);
-    }, []);
-
+    const switchServer = (index: number) => {
+        setServerIndex(index);
+        setIframeKey((k) => k + 1);
+        setPlayerError(false);
+    };
 
     if (isLoading) {
         return (
@@ -81,11 +95,7 @@ const MovieDetailPage = () => {
     }
 
     if (isError || !movie) {
-        return (
-            <Typography color="error">
-                Failed to load movie.
-            </Typography>
-        );
+        return <Typography color="error">Failed to load movie.</Typography>;
     }
 
     const posterUrl = movie.posterPath
@@ -96,55 +106,35 @@ const MovieDetailPage = () => {
         ? `https://image.tmdb.org/t/p/w780${movie.backdropPath}`
         : null;
 
-    // const videoUrl = `https://vidlink.pro/movie/${movie.id}?player=jw&primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=falseprimaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=false`;
-    const videoUrl = `https://player.videasy.net/movie/${movie.id}`;
+    const activeServer = SERVERS[serverIndex];
+    const iframeSrc = activeServer.url(movie.id);
 
     return (
         <Box sx={{ mt: 5 }}>
-            {/* 🎬 HERO BACKDROP (image or placeholder) */}
+            {/* HERO */}
             <Box
                 sx={{
                     position: 'relative',
                     height: { xs: 300, md: 460 },
                     backgroundImage: backdropUrl
-                        ? `linear-gradient(
-                            to bottom,
-                            rgba(0,0,0,0.35),
-                            ${theme.palette.background.default}
-                        ), url(${backdropUrl})`
-                        : `linear-gradient(
-                            to bottom,
-                            ${theme.palette.grey[800]},
-                            ${theme.palette.background.default}
-                        )`,
+                        ? `linear-gradient(to bottom, rgba(0,0,0,0.35), ${theme.palette.background.default}), url(${backdropUrl})`
+                        : `linear-gradient(to bottom, ${theme.palette.grey[800]}, ${theme.palette.background.default})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     mb: { xs: 6, md: 8 }
                 }}
             >
-                {/* 🔙 BACK BUTTON */}
                 <Tooltip title="Back" arrow>
                     <IconButton
-                        onClick={() => {
-                            navigate('/movies');
-                        }}
+                        onClick={() => navigate('/movies')}
                         sx={{
                             position: 'absolute',
-                            top: { xs: 16, md: 24 },
-                            left: { xs: 16, md: 32 },
-                            zIndex: 2,
+                            top: 20,
+                            left: 24,
                             color: 'white',
                             backgroundColor: 'rgba(20,20,30,0.55)',
                             backdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(255,255,255,0.12)',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
-                            transition:
-                                'all 200ms cubic-bezier(.4,0,.2,1)',
-                            '&:hover': {
-                                backgroundColor:
-                                    'rgba(20,20,30,0.75)',
-                                transform: 'translateY(-1px)'
-                            }
+                            '&:hover': { backgroundColor: 'rgba(20,20,30,0.75)' }
                         }}
                     >
                         <ArrowBackRoundedIcon />
@@ -153,31 +143,14 @@ const MovieDetailPage = () => {
             </Box>
 
             <Box sx={{ px: { xs: 2, md: 6 }, mt: { xs: -4, md: -6 } }}>
-                <Stack
-                    direction={{ xs: 'column', md: 'row' }}
-                    spacing={5}
-                >
-                    {/* POSTER OR PLACEHOLDER */}
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={5}>
                     <Box
                         sx={{
                             width: 240,
                             height: 360,
                             borderRadius: 3,
                             overflow: 'hidden',
-                            alignSelf: 'flex-start',
-                            mt: { xs: -4, md: -6 },
-                            backgroundColor: posterUrl
-                                ? 'transparent'
-                                : 'background.paper',
-                            border: posterUrl
-                                ? 'none'
-                                : '1px solid',
-                            borderColor: 'divider',
-                            boxShadow:
-                                '0 30px 80px rgba(0,0,0,0.65)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
+                            boxShadow: '0 30px 80px rgba(0,0,0,0.65)'
                         }}
                     >
                         {posterUrl && (
@@ -185,38 +158,22 @@ const MovieDetailPage = () => {
                                 component="img"
                                 src={posterUrl}
                                 alt={movie.title}
-                                sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover'
-                                }}
+                                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                         )}
                     </Box>
 
-                    {/* TEXT BLOCK */}
                     <Box sx={{ maxWidth: 720 }}>
-                        <Typography
-                            variant="h3"
-                            fontWeight={800}
-                            sx={{ mb: 1, mt: 0.5 }}
-                        >
+                        <Typography variant="h3" fontWeight={800}>
                             {movie.title}
                         </Typography>
 
-                        {/* META */}
-                        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                        <Stack direction="row" spacing={1} sx={{ my: 2 }}>
                             {movie.releaseDate && (
-                                <Chip
-                                    label={movie.releaseDate.slice(0, 4)}
-                                    size="small"
-                                />
+                                <Chip label={movie.releaseDate.slice(0, 4)} size="small" />
                             )}
                             {movie.runtime && (
-                                <Chip
-                                    label={`${movie.runtime} min`}
-                                    size="small"
-                                />
+                                <Chip label={`${movie.runtime} min`} size="small" />
                             )}
                             {movie.voteAverage && (
                                 <Chip
@@ -227,34 +184,16 @@ const MovieDetailPage = () => {
                             )}
                         </Stack>
 
-                        {/* GENRES */}
                         {movie.genres && (
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                flexWrap="wrap"
-                                sx={{ mb: 3 }}
-                            >
+                            <Stack direction="row" spacing={1} flexWrap="wrap">
                                 {movie.genres.map((g) => (
-                                    <Chip
-                                        key={g.id}
-                                        label={g.name}
-                                        size="small"
-                                        variant="outlined"
-                                    />
+                                    <Chip key={g.id} label={g.name} size="small" />
                                 ))}
                             </Stack>
                         )}
 
-                        {/* OVERVIEW */}
                         {movie.overview && (
-                            <Typography
-                                sx={{
-                                    color: 'text.secondary',
-                                    lineHeight: 1.8,
-                                    fontSize: '1rem'
-                                }}
-                            >
+                            <Typography sx={{ mt: 3, color: 'text.secondary' }}>
                                 {movie.overview}
                             </Typography>
                         )}
@@ -264,12 +203,6 @@ const MovieDetailPage = () => {
                 <Divider sx={{ my: 6 }} />
 
                 {/* PLAYER */}
-                {/*<video*/}
-                {/*    controls*/}
-                {/*    autoPlay*/}
-                {/*    style={{ width: '100%', background: 'black' }}*/}
-                {/*    src="https://vidlink.pro/api/b/movie/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmC8s6xo-dtZm1T4JtIFA58eKAMh5dVYZ2cQjzkuy?multiLang=0"*/}
-                {/*/>*/}
                 <Box
                     sx={{
                         position: 'relative',
@@ -279,10 +212,38 @@ const MovieDetailPage = () => {
                         boxShadow: '0 40px 100px rgba(0,0,0,0.6)'
                     }}
                 >
+                    {/* Server selector overlay */}
                     <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 1,
+                            p: 1,
+                            borderRadius: 2,
+                            backgroundColor: 'rgba(15,15,20,0.55)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255,255,255,0.12)'
+                        }}
+                    >
+                        {SERVERS.map((s, index) => (
+                            <Chip
+                                key={s.id}
+                                label={s.label}
+                                size="small"
+                                clickable
+                                color={index === serverIndex ? 'primary' : 'default'}
+                                onClick={() => switchServer(index)}
+                            />
+                        ))}
+                    </Box>
+
+                    <Box
+                        key={iframeKey}
                         component="iframe"
-                        src={videoUrl}
-                        // sandbox="allow-scripts allow-same-origin"
+                        src={iframeSrc}
                         allow="fullscreen; autoplay; picture-in-picture"
                         referrerPolicy="no-referrer"
                         allowFullScreen
@@ -295,6 +256,12 @@ const MovieDetailPage = () => {
                         }}
                     />
                 </Box>
+
+                {playerError && (
+                    <Typography sx={{ mt: 2 }} color="warning.main">
+                        This server may be unavailable. Try switching servers.
+                    </Typography>
+                )}
             </Box>
         </Box>
     );
