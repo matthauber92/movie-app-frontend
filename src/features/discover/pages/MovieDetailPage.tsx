@@ -24,7 +24,7 @@ const SERVERS = [
         id: 'vidlink',
         label: 'Server 2',
         url: (id: number) =>
-            `https://vidlink.pro/movie/${id}?player=jw&primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=falseprimaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&player=default&title=true&poster=true&autoplay=false&nextbutton=false`
+            `https://vidlink.pro/movie/${id}?player=jw&primaryColor=63b8bc&secondaryColor=a2a2a2&iconColor=eefdec&icons=default&autoplay=false`
     }
 ];
 
@@ -43,8 +43,7 @@ const MovieDetailPage = () => {
     // Block popup windows
     useEffect(() => {
         const originalOpen = window.open;
-        window.open = function(...args) {
-            console.warn('Blocked popup:', args[0]);
+        window.open = function() {
             return null;
         };
         return () => {
@@ -63,13 +62,10 @@ const MovieDetailPage = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Detect failed load via timeout
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setPlayerError(false);
-        const timeout = setTimeout(() => {
-            setPlayerError(true);
-        }, 6000);
+        const timeout = setTimeout(() => setPlayerError(true), 6000);
         return () => clearTimeout(timeout);
     }, [serverIndex, iframeKey]);
 
@@ -81,14 +77,7 @@ const MovieDetailPage = () => {
 
     if (isLoading) {
         return (
-            <Box
-                sx={{
-                    minHeight: '70vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-            >
+            <Box sx={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CircularProgress />
             </Box>
         );
@@ -106,8 +95,7 @@ const MovieDetailPage = () => {
         ? `https://image.tmdb.org/t/p/w780${movie.backdropPath}`
         : null;
 
-    const activeServer = SERVERS[serverIndex];
-    const iframeSrc = activeServer.url(movie.id);
+    const iframeSrc = SERVERS[serverIndex].url(movie.id);
 
     return (
         <Box sx={{ mt: 5 }}>
@@ -117,14 +105,14 @@ const MovieDetailPage = () => {
                     position: 'relative',
                     height: { xs: 300, md: 460 },
                     backgroundImage: backdropUrl
-                        ? `linear-gradient(to bottom, rgba(0,0,0,0.35), ${theme.palette.background.default}), url(${backdropUrl})`
+                        ? `linear-gradient(to bottom, rgba(0,0,0,0.45), ${theme.palette.background.default}), url(${backdropUrl})`
                         : `linear-gradient(to bottom, ${theme.palette.grey[800]}, ${theme.palette.background.default})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     mb: { xs: 6, md: 8 }
                 }}
             >
-                <Tooltip title="Back" arrow>
+                <Tooltip title="Back">
                     <IconButton
                         onClick={() => navigate('/movies')}
                         sx={{
@@ -144,6 +132,7 @@ const MovieDetailPage = () => {
 
             <Box sx={{ px: { xs: 2, md: 6 }, mt: { xs: -4, md: -6 } }}>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={5}>
+                    {/* POSTER */}
                     <Box
                         sx={{
                             width: 240,
@@ -163,12 +152,13 @@ const MovieDetailPage = () => {
                         )}
                     </Box>
 
+                    {/* DETAILS */}
                     <Box sx={{ maxWidth: 720 }}>
                         <Typography variant="h3" fontWeight={800}>
                             {movie.title}
                         </Typography>
 
-                        <Stack direction="row" spacing={1} sx={{ my: 2 }}>
+                        <Stack direction="row" spacing={1} sx={{ my: 2, flexWrap: 'wrap' }}>
                             {movie.releaseDate && (
                                 <Chip label={movie.releaseDate.slice(0, 4)} size="small" />
                             )}
@@ -184,19 +174,88 @@ const MovieDetailPage = () => {
                             )}
                         </Stack>
 
-                        {movie.genres && (
-                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                                {movie.genres.map((g) => (
-                                    <Chip key={g.id} label={g.name} size="small" />
-                                ))}
-                            </Stack>
-                        )}
+                        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 3 }}>
+                            {movie.genres?.map((g) => (
+                                <Chip key={g.id} label={g.name} size="small" variant="outlined" />
+                            ))}
+                        </Stack>
 
-                        {movie.overview && (
-                            <Typography sx={{ mt: 3, color: 'text.secondary' }}>
-                                {movie.overview}
-                            </Typography>
-                        )}
+                        <Typography color="text.secondary" lineHeight={1.8}>
+                            {movie.overview}
+                        </Typography>
+
+                        {/* CAST */}
+                        {movie.credits?.cast?.length ? (
+                            <Box sx={{ mt: 4 }}>
+                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+                                    Cast
+                                </Typography>
+
+                                <Box
+                                    sx={{
+                                        width: '150%',
+                                        display: 'flex',
+                                        gap: 2,
+                                        overflowX: 'auto',
+                                        pb: 1,
+                                        scrollbarWidth: 'none',
+                                        msOverflowStyle: 'none',
+                                        '&::-webkit-scrollbar': { display: 'none' }
+                                    }}
+                                >
+                                    {movie.credits.cast.slice(0, 20).map((actor) => (
+                                        <Box key={actor.id} sx={{ minWidth: 110, textAlign: 'center' }}>
+                                            <Box
+                                                sx={{
+                                                    width: 110,
+                                                    height: 165,
+                                                    borderRadius: 1.5,
+                                                    overflow: 'hidden',
+                                                    backgroundColor: 'grey.900',
+                                                    boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                                                    transition: 'transform 160ms ease',
+                                                    '&:hover': { transform: 'translateY(-3px)' }
+                                                }}
+                                            >
+                                                {actor.profileImageUrl ? (
+                                                    <Box
+                                                        component="img"
+                                                        src={actor.profileImageUrl}
+                                                        alt={actor.name}
+                                                        loading="lazy"
+                                                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <Box
+                                                        sx={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: 11,
+                                                            color: 'text.secondary'
+                                                        }}
+                                                    >
+                                                        No Image
+                                                    </Box>
+                                                )}
+                                            </Box>
+
+                                            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.75 }} noWrap>
+                                                {actor.name}
+                                            </Typography>
+
+                                            {actor.character && (
+                                                <Typography variant="caption" color="text.secondary" noWrap>
+                                                    {actor.character}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </Box>
+                        ) : null}
                     </Box>
                 </Stack>
 
@@ -212,7 +271,7 @@ const MovieDetailPage = () => {
                         boxShadow: '0 40px 100px rgba(0,0,0,0.6)'
                     }}
                 >
-                    {/* Server selector overlay */}
+                    {/* SERVER SELECT */}
                     <Box
                         sx={{
                             position: 'absolute',
@@ -224,8 +283,7 @@ const MovieDetailPage = () => {
                             p: 1,
                             borderRadius: 2,
                             backgroundColor: 'rgba(15,15,20,0.55)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(255,255,255,0.12)'
+                            backdropFilter: 'blur(8px)'
                         }}
                     >
                         {SERVERS.map((s, index) => (

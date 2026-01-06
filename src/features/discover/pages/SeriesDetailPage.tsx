@@ -39,7 +39,6 @@ const SeriesDetailPage = () => {
 
     const [season, setSeason] = useState(1);
     const [episode, setEpisode] = useState(1);
-
     const [serverIndex, setServerIndex] = useState(0);
     const [iframeKey, setIframeKey] = useState(0);
     const [playerError, setPlayerError] = useState(false);
@@ -90,8 +89,7 @@ const SeriesDetailPage = () => {
         if (series.lastEpisodeToAir) {
             const s = series.lastEpisodeToAir.seasonNumber;
             const e = series.lastEpisodeToAir.episodeNumber;
-            const exists = seasons.some(x => x.seasonNumber === s);
-            if (exists) {
+            if (seasons.some(x => x.seasonNumber === s)) {
                 // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSeason(s);
                 setEpisode(e);
@@ -105,24 +103,17 @@ const SeriesDetailPage = () => {
         }
     }, [series, seasons]);
 
-    // Clamp episode when switching seasons
+    // Clamp episode
     useEffect(() => {
-        if (episodeCount <= 0) return;
+        if (!episodeCount) return;
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (episode > episodeCount) setEpisode(episodeCount);
         if (episode < 1) setEpisode(1);
-    }, [episodeCount, episode]);
+    }, [episode, episodeCount]);
 
     if (isLoading) {
         return (
-            <Box
-                sx={{
-                    minHeight: '70vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-            >
+            <Box sx={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CircularProgress />
             </Box>
         );
@@ -140,8 +131,7 @@ const SeriesDetailPage = () => {
         ? `https://image.tmdb.org/t/p/original${series.backdropPath}`
         : null;
 
-    const activeServer = SERVERS[serverIndex];
-    const iframeSrc = activeServer.url(Number(seriesId), season, episode);
+    const iframeSrc = SERVERS[serverIndex].url(Number(seriesId), season, episode);
 
     return (
         <Box sx={{ mt: 5 }}>
@@ -166,8 +156,7 @@ const SeriesDetailPage = () => {
                             left: 24,
                             color: 'white',
                             backgroundColor: 'rgba(20,20,30,0.55)',
-                            backdropFilter: 'blur(10px)',
-                            '&:hover': { backgroundColor: 'rgba(20,20,30,0.75)' }
+                            backdropFilter: 'blur(10px)'
                         }}
                     >
                         <ArrowBackRoundedIcon />
@@ -177,15 +166,14 @@ const SeriesDetailPage = () => {
 
             <Box sx={{ px: { xs: 2, md: 6 }, mt: 2 }}>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={5}>
-                    <Box
-                        sx={{
-                            width: 240,
-                            height: 360,
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                            boxShadow: '0 30px 70px rgba(0,0,0,0.6)'
-                        }}
-                    >
+                    {/* POSTER */}
+                    <Box sx={{
+                        width: 240,
+                        height: 360,
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        boxShadow: '0 30px 70px rgba(0,0,0,0.6)'
+                    }}>
                         {posterUrl && (
                             <Box
                                 component="img"
@@ -196,28 +184,23 @@ const SeriesDetailPage = () => {
                         )}
                     </Box>
 
+                    {/* DETAILS */}
                     <Box sx={{ maxWidth: 720 }}>
                         <Typography variant="h3" fontWeight={800}>
                             {series.name}
                         </Typography>
 
                         <Stack direction="row" spacing={1} sx={{ my: 2, flexWrap: 'wrap' }}>
-                            {series.firstAirDate && (
-                                <Chip label={series.firstAirDate.slice(0, 4)} size="small" />
-                            )}
+                            {series.firstAirDate && <Chip label={series.firstAirDate.slice(0, 4)} size="small" />}
                             <Chip label={`${series.numberOfSeasons} Seasons`} size="small" />
                             <Chip label={`${series.numberOfEpisodes} Episodes`} size="small" />
                             {series.voteAverage > 0 && (
-                                <Chip
-                                    label={`★ ${series.voteAverage.toFixed(1)}`}
-                                    size="small"
-                                    color="secondary"
-                                />
+                                <Chip label={`★ ${series.voteAverage.toFixed(1)}`} size="small" color="secondary" />
                             )}
                         </Stack>
 
                         <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 3 }}>
-                            {series.genres?.map((g) => (
+                            {series.genres.map(g => (
                                 <Chip key={g.id} label={g.name} size="small" variant="outlined" />
                             ))}
                         </Stack>
@@ -225,6 +208,77 @@ const SeriesDetailPage = () => {
                         <Typography color="text.secondary" lineHeight={1.8}>
                             {series.overview}
                         </Typography>
+
+                        {/* CAST */}
+                        {series.credits?.cast?.length ? (
+                            <Box sx={{ mt: 4 }}>
+                                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+                                    Cast
+                                </Typography>
+
+                                <Box
+                                    sx={{
+                                        width: '150%',
+                                        display: 'flex',
+                                        gap: 2,
+                                        overflowX: 'auto',
+                                        pb: 1,
+                                        scrollbarWidth: 'none',
+                                        msOverflowStyle: 'none',
+                                        '&::-webkit-scrollbar': { display: 'none' }
+                                    }}
+                                >
+                                    {series.credits.cast.slice(0, 20).map(actor => (
+                                        <Box key={actor.id} sx={{ minWidth: 110, textAlign: 'center' }}>
+                                            <Box
+                                                sx={{
+                                                    width: 110,
+                                                    height: 165,
+                                                    borderRadius: 1.5,
+                                                    overflow: 'hidden',
+                                                    backgroundColor: 'grey.900',
+                                                    boxShadow: '0 8px 20px rgba(0,0,0,0.45)',
+                                                    transition: 'transform 160ms ease',
+                                                    '&:hover': { transform: 'translateY(-3px)' }
+                                                }}
+                                            >
+                                                {actor.profileImageUrl ? (
+                                                    <Box
+                                                        component="img"
+                                                        src={actor.profileImageUrl}
+                                                        alt={actor.name}
+                                                        loading="lazy"
+                                                        sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <Box sx={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        fontSize: 11,
+                                                        color: 'text.secondary'
+                                                    }}>
+                                                        No Image
+                                                    </Box>
+                                                )}
+                                            </Box>
+
+                                            <Typography variant="body2" fontWeight={600} sx={{ mt: 0.75 }} noWrap>
+                                                {actor.name}
+                                            </Typography>
+
+                                            {actor.character && (
+                                                <Typography variant="caption" color="text.secondary" noWrap>
+                                                    {actor.character}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </Box>
+                        ) : null}
                     </Box>
                 </Stack>
 
@@ -232,77 +286,54 @@ const SeriesDetailPage = () => {
 
                 {/* SEASON SELECT */}
                 <Stack direction="row" spacing={1} sx={{ mb: 3, overflowX: 'auto', pb: 1 }}>
-                    {seasons.map((s) => {
-                        const active = s.seasonNumber === season;
-                        return (
-                            <Chip
-                                key={s.id ?? s.seasonNumber}
-                                label={`Season ${s.seasonNumber}`}
-                                clickable
-                                onClick={() => {
-                                    setSeason(s.seasonNumber);
-                                    setEpisode(1);
-                                }}
-                                color={active ? 'primary' : 'default'}
-                            />
-                        );
-                    })}
+                    {seasons.map(s => (
+                        <Chip
+                            key={s.seasonNumber}
+                            label={`Season ${s.seasonNumber}`}
+                            clickable
+                            color={s.seasonNumber === season ? 'primary' : 'default'}
+                            onClick={() => {
+                                setSeason(s.seasonNumber);
+                                setEpisode(1);
+                            }}
+                        />
+                    ))}
                 </Stack>
 
-                {/* EPISODE SELECT */}
-                {episodeCount > 0 ? (
-                    <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2, mb: 4 }}>
-                        {Array.from({ length: episodeCount }, (_, i) => i + 1).map((ep) => {
-                            const active = ep === episode;
-                            return (
-                                <Box
-                                    key={ep}
-                                    onClick={() => setEpisode(ep)}
-                                    sx={{
-                                        minWidth: 220,
-                                        p: 2,
-                                        borderRadius: 2,
-                                        cursor: 'pointer',
-                                        backgroundColor: active
-                                            ? 'rgba(255,255,255,0.14)'
-                                            : 'rgba(255,255,255,0.05)',
-                                        border: active
-                                            ? '1px solid rgba(255,255,255,0.35)'
-                                            : '1px solid transparent',
-                                        transition: 'all 180ms ease',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(255,255,255,0.14)',
-                                            transform: 'translateY(-4px)'
-                                        }
-                                    }}
-                                >
-                                    <Typography fontWeight={700}>
-                                        Episode {ep}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                                        Click to play
-                                    </Typography>
-                                </Box>
-                            );
-                        })}
-                    </Box>
-                ) : (
-                    <Typography color="text.secondary" sx={{ mb: 4 }}>
-                        No episode count available for this season.
-                    </Typography>
-                )}
+                {/* EPISODES */}
+                <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2, mb: 4 }}>
+                    {Array.from({ length: episodeCount }, (_, i) => i + 1).map(ep => (
+                        <Box
+                            key={ep}
+                            onClick={() => setEpisode(ep)}
+                            sx={{
+                                minWidth: 220,
+                                p: 2,
+                                borderRadius: 2,
+                                cursor: 'pointer',
+                                backgroundColor: ep === episode
+                                    ? 'rgba(255,255,255,0.14)'
+                                    : 'rgba(255,255,255,0.05)',
+                                transition: 'all 180ms ease',
+                                '&:hover': { backgroundColor: 'rgba(255,255,255,0.14)', transform: 'translateY(-4px)' }
+                            }}
+                        >
+                            <Typography fontWeight={700}>Episode {ep}</Typography>
+                            <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                                Click to play
+                            </Typography>
+                        </Box>
+                    ))}
+                </Box>
 
                 {/* PLAYER */}
-                <Box
-                    sx={{
-                        position: 'relative',
-                        paddingTop: '56.25%',
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                        boxShadow: '0 40px 100px rgba(0,0,0,0.6)'
-                    }}
-                >
-                    {/* SERVER SELECTOR — IDENTICAL TO MOVIE DETAIL PAGE */}
+                <Box sx={{
+                    position: 'relative',
+                    paddingTop: '56.25%',
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    boxShadow: '0 40px 100px rgba(0,0,0,0.6)'
+                }}>
                     <Box
                         sx={{
                             position: 'absolute',
@@ -314,18 +345,17 @@ const SeriesDetailPage = () => {
                             p: 1,
                             borderRadius: 2,
                             backgroundColor: 'rgba(15,15,20,0.55)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(255,255,255,0.12)'
+                            backdropFilter: 'blur(8px)'
                         }}
                     >
-                        {SERVERS.map((s, index) => (
+                        {SERVERS.map((s, i) => (
                             <Chip
                                 key={s.id}
                                 label={s.label}
                                 size="small"
                                 clickable
-                                color={index === serverIndex ? 'primary' : 'default'}
-                                onClick={() => switchServer(index)}
+                                color={i === serverIndex ? 'primary' : 'default'}
+                                onClick={() => switchServer(i)}
                             />
                         ))}
                     </Box>
@@ -337,13 +367,7 @@ const SeriesDetailPage = () => {
                         allow="fullscreen; autoplay; picture-in-picture"
                         referrerPolicy="no-referrer"
                         allowFullScreen
-                        sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            width: '100%',
-                            height: '100%',
-                            border: 0
-                        }}
+                        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
                     />
                 </Box>
 

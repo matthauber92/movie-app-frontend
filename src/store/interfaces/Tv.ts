@@ -61,14 +61,15 @@ export interface TmdbTvResult {
         runtime?: number | null;
         stillPath?: string | null;
     } | null;
-
     nextEpisodeToAir?: {
         airDate: string;
         seasonNumber: number;
         episodeNumber: number;
     } | null;
-
     seasons: TmdbSeason[];
+    credits?: {
+        cast: TmdbCastMember[];
+    };
 }
 
 export interface TmdbSeason {
@@ -84,4 +85,14 @@ export interface TmdbSeason {
 
     voteAverage?: number;
 }
+
+export interface TmdbCastMember {
+    id: number;
+    name: string;
+    character?: string;
+    profilePath?: string | null;
+    profileImageUrl?: string | null;
+    order: number;
+}
+
 

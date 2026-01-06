@@ -15,6 +15,14 @@ export interface SearchResultDto {
     releaseDate?: string | null;
 }
 
+export interface TmdbCastMember {
+    id: number;
+    name: string;
+    character?: string;
+    profilePath?: string | null;
+    profileImageUrl?: string | null;
+}
+
 export interface TmdbMovie {
     id: number;
     title: string;
@@ -25,4 +33,8 @@ export interface TmdbMovie {
     runtime?: number;
     voteAverage?: number;
     genres?: { id: number; name: string }[];
+    credits?: {
+        cast: TmdbCastMember[];
+    };
 }
+
