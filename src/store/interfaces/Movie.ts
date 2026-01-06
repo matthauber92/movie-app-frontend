@@ -12,6 +12,7 @@ export interface SearchResultDto {
     subtitle?: string;
     imagePath?: string | null;
     popularity?: number;
+    releaseDate?: string | null;
 }
 
 export interface TmdbMovie {

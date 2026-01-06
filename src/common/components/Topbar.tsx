@@ -21,9 +21,6 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useDebouncedValue } from '../../../hooks';
 import { useSearchMoviesQuery } from '../../store/api/moviesApiSlice.ts';
 
-/* ----------------------------- */
-/* Types                         */
-/* ----------------------------- */
 type SearchResultType = 'movie' | 'tv' | 'person' | string;
 
 type SearchResult = {
@@ -32,6 +29,7 @@ type SearchResult = {
     title: string;
     subtitle?: string | null;
     imagePath?: string | null;
+    releaseDate?: string | null;
 };
 
 const SearchWrapper = styled(Box)(({ theme }) => ({
@@ -133,7 +131,7 @@ const TopBar = () => {
             <Autocomplete<SearchResult, false, false, false>
                 options={searchResults}
                 loading={isSearching}
-                filterOptions={(x) => x}
+                filterOptions={(x) => x.filter(media => media.imagePath)}
                 getOptionLabel={(option) => option.title ?? ''}
                 popupIcon={null}
                 fullWidth
@@ -143,7 +141,7 @@ const TopBar = () => {
                     navigate(`/${value.type === 'tv' ? 'series' : 'movies'}/${value.id}`);
                 }}
                 sx={{
-                    '& .MuiAutocomplete-inputRoot': { px: 0 }
+                    '& .MuiAutocomplete-inputRoot': { px: 1, pb: 1 }
                 }}
                 renderInput={(params) => (
                     <TextField
@@ -215,14 +213,15 @@ const TopBar = () => {
                                 />
                             )}
                         </Box>
-
                         <Box sx={{ minWidth: 0 }}>
                             <Typography noWrap fontSize={14} fontWeight={500}>
                                 {option.title}
                             </Typography>
                             <Typography noWrap fontSize={12} color="rgba(255,255,255,0.6)">
                                 {option.subtitle && `${option.subtitle} · `}
-                                {option.type === 'tv' ? 'TV Series' : 'Movie'}
+                                {option.type === 'tv' ? 'TV Series' : 'Movie'} (
+                                {option.releaseDate?.split('-')?.[0] ?? ''}
+                                )
                             </Typography>
                         </Box>
                     </Box>
